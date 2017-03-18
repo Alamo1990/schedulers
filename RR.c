@@ -6,13 +6,14 @@
 #include <unistd.h>
 
 #include "RR.h"
-#include "interrupt.h"
+//#include "interrupt.h"
 
 long hungry = 0L;
 
 TCB* scheduler();
 void activator();
 void timer_interrupt(int sig);
+
 
 /* Array of state thread control blocks: the process allows a maximum of N threads */
 static TCB t_state[N];
@@ -21,13 +22,12 @@ static TCB* running;
 static int current = 0;
 /* Variable indicating if the library is initialized (init == 1) or not (init == 0) */
 static int init=0;
-/*Counter for the round robin swap*/
-static int current_tick;
 /*queue*/
-
+struct queue* queue;
 
 /* Initialize the thread library */
 void init_mythreadlib() {
+        queue= queue_new();
         int i;
         t_state[0].state = INIT;
         t_state[0].priority = LOW_PRIORITY;
@@ -70,6 +70,7 @@ int mythread_create (void (*fun_addr)(),int priority)
         t_state[i].run_env.uc_stack.ss_size = STACKSIZE;
         t_state[i].run_env.uc_stack.ss_flags = 0;
         makecontext(&t_state[i].run_env, fun_addr, 1);
+        enqueue(queue,&t_state[i]);
         return i;
 } /****** End my_thread_create() ******/
 
@@ -107,10 +108,12 @@ int mythread_gettid(){
 
 /* Timer interrupt  */
 void timer_interrupt(int sig){
-       current_ticks=0;
-       running->ticks--;
-        if(current_ticks++==40||running->ticks==0){
-                /*switch context*/
+      running->ticks--;
+        TCB* next = scheduler();
+        activator(next);       
+        if(running->ticks--==0){
+                scheduler();
+                activator(next);
         }
 
 }
@@ -119,12 +122,24 @@ void timer_interrupt(int sig){
 
 /* Scheduler: returns the next thread to be executed */
 TCB* scheduler(){
-        int i;
+        /*int i;
         for(i=0; i<N; i++) {
                 if (t_state[i].state == INIT) {
                         current = i;
                         return &t_state[i];
                 }
+        }*/
+        if(running->ticks==0){
+                disable_interrupt();
+                enqueue(queue,running);
+                enable_interrupt();
+        }
+        
+        if(!queueEmpty(queue)){
+                disable_interrupt();
+                TCB* next=dequeue(queue);
+                enable_interrupt();
+                return next;
         }
         printf("mythread_free: No thread in the system\nExiting...\n");
         exit(1);
