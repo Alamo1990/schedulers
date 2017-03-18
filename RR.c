@@ -21,6 +21,10 @@ static TCB* running;
 static int current = 0;
 /* Variable indicating if the library is initialized (init == 1) or not (init == 0) */
 static int init=0;
+/*Counter for the round robin swap*/
+static int current_tick;
+/*queue*/
+
 
 /* Initialize the thread library */
 void init_mythreadlib() {
@@ -103,6 +107,11 @@ int mythread_gettid(){
 
 /* Timer interrupt  */
 void timer_interrupt(int sig){
+       current_ticks=0;
+       running->ticks--;
+        if(current_ticks++==40||running->ticks==0){
+                /*switch context*/
+        }
 
 }
 
