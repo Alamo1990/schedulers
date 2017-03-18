@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <ucontext.h>
 #include <unistd.h>
+#include <queue.h>
 
 #include "interrupt.h"
 
