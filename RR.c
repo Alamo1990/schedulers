@@ -6,14 +6,14 @@
 #include <unistd.h>
 
 #include "RR.h"
-//#include "interrupt.h"
 
 long hungry = 0L;
 
-TCB* scheduler();
-void activator();
-void timer_interrupt(int sig);
+struct queue* q;
 
+TCB* scheduler();
+void activator(TCB* next);
+void timer_interrupt(int sig);
 
 /* Array of state thread control blocks: the process allows a maximum of N threads */
 static TCB t_state[N];
@@ -22,12 +22,10 @@ static TCB* running;
 static int current = 0;
 /* Variable indicating if the library is initialized (init == 1) or not (init == 0) */
 static int init=0;
-/*queue*/
-struct queue* queue;
 
 /* Initialize the thread library */
 void init_mythreadlib() {
-        queue= queue_new();
+        q = queue_new();
         int i;
         t_state[0].state = INIT;
         t_state[0].priority = LOW_PRIORITY;
@@ -46,9 +44,9 @@ void init_mythreadlib() {
 
 
 /* Create and intialize a new thread with body fun_addr and one integer argument */
-int mythread_create (void (*fun_addr)(),int priority)
-{
+int mythread_create (void (*fun_addr)(),int priority){
         int i;
+
 
         if (!init) { init_mythreadlib(); init=1; }
         for (i=0; i<N; i++)
@@ -58,9 +56,11 @@ int mythread_create (void (*fun_addr)(),int priority)
                 perror("getcontext in my_thread_create");
                 exit(-1);
         }
+        enqueue(q, &t_state[i]);
         t_state[i].state = INIT;
         t_state[i].priority = priority;
         t_state[i].function = fun_addr;
+        t_state[i].ticks = QUANTUM_TICKS;
         t_state[i].run_env.uc_stack.ss_sp = (void *)(malloc(STACKSIZE));
         if(t_state[i].run_env.uc_stack.ss_sp == NULL) {
                 printf("thread failed to get stack space\n");
@@ -70,7 +70,6 @@ int mythread_create (void (*fun_addr)(),int priority)
         t_state[i].run_env.uc_stack.ss_size = STACKSIZE;
         t_state[i].run_env.uc_stack.ss_flags = 0;
         makecontext(&t_state[i].run_env, fun_addr, 1);
-        enqueue(queue,&t_state[i]);
         return i;
 } /****** End my_thread_create() ******/
 
@@ -108,39 +107,29 @@ int mythread_gettid(){
 
 /* Timer interrupt  */
 void timer_interrupt(int sig){
-      running->ticks--;
-        TCB* next = scheduler();
-        activator(next);       
-        if(running->ticks--==0){
-                scheduler();
+        if(--running->ticks == 0) {
+                TCB* next = scheduler();
                 activator(next);
         }
-
 }
 
 
 
 /* Scheduler: returns the next thread to be executed */
 TCB* scheduler(){
-        /*int i;
-        for(i=0; i<N; i++) {
-                if (t_state[i].state == INIT) {
-                        current = i;
-                        return &t_state[i];
-                }
-        }*/
-        if(running->ticks==0){
+        if(running->ticks == 0) {
                 disable_interrupt();
-                enqueue(queue,running);
+                enqueue(q, running);
                 enable_interrupt();
         }
-        
-        if(!queueEmpty(queue)){
+        if(!queue_empty(q)) {
                 disable_interrupt();
-                TCB* next=dequeue(queue);
+                TCB* next = dequeue(q);
                 enable_interrupt();
+
                 return next;
         }
+
         printf("mythread_free: No thread in the system\nExiting...\n");
         exit(1);
 }
