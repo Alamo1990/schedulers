@@ -25,6 +25,7 @@ static int init=0;
 
 /* Initialize the thread library */
 void init_mythreadlib() {
+        printf("#####\tDEBUG: enter init_mythreadlib()\n"); //DEBUG
         q = queue_new();
         int i;
         t_state[0].state = INIT;
@@ -47,7 +48,6 @@ void init_mythreadlib() {
 int mythread_create (void (*fun_addr)(),int priority){
         int i;
 
-
         if (!init) { init_mythreadlib(); init=1; }
         for (i=0; i<N; i++)
                 if (t_state[i].state == FREE) break;
@@ -56,6 +56,7 @@ int mythread_create (void (*fun_addr)(),int priority){
                 perror("getcontext in my_thread_create");
                 exit(-1);
         }
+        printf("#####\tDEBUG: i = %d\n", i); //DEBUG
         enqueue(q, &t_state[i]);
         t_state[i].state = INIT;
         t_state[i].priority = priority;
@@ -107,6 +108,7 @@ int mythread_gettid(){
 
 /* Timer interrupt  */
 void timer_interrupt(int sig){
+        printf("##### DEBUG: Tick on thread %d. Remaining ticks: %d\n", running->tid, running->ticks);
         if(--running->ticks == 0) {
                 TCB* next = scheduler();
                 activator(next);
@@ -118,6 +120,8 @@ void timer_interrupt(int sig){
 /* Scheduler: returns the next thread to be executed */
 TCB* scheduler(){
         if(running->ticks == 0) {
+                printf("##### DEBUG: (scheduler)Thread %d has run out of time and will be added again to the queue\n", running->tid);
+                running->ticks = QUANTUM_TICKS;
                 disable_interrupt();
                 enqueue(q, running);
                 enable_interrupt();
@@ -127,8 +131,11 @@ TCB* scheduler(){
                 TCB* next = dequeue(q);
                 enable_interrupt();
 
+                printf("##### DEBUG: Dequeued thread %d \n", next->tid);
+
+
                 return next;
-        }
+        }else printf("##### DEBUG: Queue is empty\n");
 
         printf("mythread_free: No thread in the system\nExiting...\n");
         exit(1);
@@ -136,7 +143,11 @@ TCB* scheduler(){
 
 /* Activator */
 void activator(TCB* next){
-        setcontext (&(next->run_env));
+
+        //running = next;//REVIEW
+        current = next->tid;
+        printf("##### DEBUG: Setting Context...\n");
+        setcontext (&(next->run_env)); //use swa context
         printf("mythread_free: After setcontext, should never get here!!...\n");
 
 }
