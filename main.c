@@ -6,18 +6,18 @@
 #include <unistd.h>
 
 //#include "mythread.h"
-#include "RR.h"
+#include "FIFO_RR.h"
 
 void fun1 (int global_index)
 {
         int a=0, b=0;
         for (a=0; a<10; ++a) {
-//    printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                printf ("Thread %d with priority %d\t from fun1 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<25000000; ++b) ;
         }
 
         for (a=0; a<10; ++a) {
-//    printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                printf ("Thread %d with priority %d\t from fun1 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<25000000; ++b) ;
         }
         mythread_exit();
@@ -29,11 +29,11 @@ void fun2 (int global_index)
 {
         int a=0, b=0;
         for (a=0; a<10; ++a) {
-                //  printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<18000000; ++b) ;
         }
         for (a=0; a<10; ++a) {
-                //  printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<18000000; ++b) ;
         }
         mythread_exit();
@@ -44,11 +44,11 @@ void fun3 (int global_index)
 {
         int a=0, b=0;
         for (a=0; a<10; ++a) {
-                //printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                printf ("Thread %d with priority %d\t from fun3 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<40000000; ++b) ;
         }
         for (a=0; a<10; ++a) {
-                //printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                printf ("Thread %d with priority %d\t from fun3 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<40000000; ++b) ;
         }
         mythread_exit();

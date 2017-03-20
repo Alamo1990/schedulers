@@ -5,11 +5,11 @@
 #include <ucontext.h>
 #include <unistd.h>
 
-#include "RR.h"
+#include "FIFO_RR.h"
 
 long hungry = 0L;
 
-struct queue* q;
+struct queue* queues[2];
 
 TCB* scheduler();
 void activator(TCB* next);
@@ -26,7 +26,8 @@ static int init=0;
 /* Initialize the thread library */
 void init_mythreadlib() {
         printf("#####\tDEBUG: enter init_mythreadlib()\n"); //DEBUG
-        q = queue_new();
+        queues[HIGH_PRIORITY] = queue_new();
+        queues[LOW_PRIORITY] = queue_new();
         int i;
         t_state[0].state = INIT;
         t_state[0].priority = LOW_PRIORITY;
@@ -57,7 +58,7 @@ int mythread_create (void (*fun_addr)(),int priority){
                 exit(-1);
         }
         printf("#####\tDEBUG: i = %d\n", i); //DEBUG
-        enqueue(q, &t_state[i]);
+        enqueue(queues[priority], &t_state[i]);
         t_state[i].state = INIT;
         t_state[i].priority = priority;
         t_state[i].function = fun_addr;
@@ -94,7 +95,7 @@ void mythread_setpriority(int priority) {
 }
 
 /* Returns the priority of the calling thread */
-int mythread_getpriority(int priority) {
+int mythread_getpriority() { //ASK: why the parameter?
         int tid = mythread_gettid();
         return t_state[tid].priority;
 }
@@ -109,7 +110,7 @@ int mythread_gettid(){
 /* Timer interrupt  */
 void timer_interrupt(int sig){
         //printf("##### DEBUG: Tick on thread %d. Remaining ticks: %d\n", running->tid, running->ticks);
-        if(--running->ticks == 0) {
+        if(mythread_getpriority() == LOW_PRIORITY && --running->ticks == 0) {
                 TCB* next = scheduler();
                 if(next!=NULL) activator(next);
         }
@@ -121,21 +122,25 @@ void timer_interrupt(int sig){
 TCB* scheduler(){
 
         running->ticks = QUANTUM_TICKS;
+        if( (mythread_getpriority() == LOW_PRIORITY || running->state == FREE) && queue_empty(queues[HIGH_PRIORITY])) {
+                if(!queue_empty(queues[LOW_PRIORITY])) {
+                        printf("##### DEBUG: (scheduler)Thread %d has run out of time and will be added again to the queue\n", running->tid);
+                        disable_interrupt();
+                        if(running->state == INIT) enqueue(queues[LOW_PRIORITY], running);
+                        TCB* next = dequeue(queues[LOW_PRIORITY]);
+                        enable_interrupt();
 
-        if(!queue_empty(q)) {
-                printf("##### DEBUG: (scheduler)Thread %d has run out of time and will be added again to the queue\n", running->tid);
+                        printf("##### DEBUG: Dequeued thread %d \n", next->tid); //DEBUG
+
+                        return next;
+                }else if(running->state == INIT) return NULL;  //ASK
+                else printf("##### DEBUG: Queue is empty\n");  //DEBUG
+        }else{
                 disable_interrupt();
-                if(running->state == INIT) enqueue(q, running);
-                TCB* next = dequeue(q);
+                TCB* next = dequeue(queues[HIGH_PRIORITY]);
                 enable_interrupt();
-
-                printf("##### DEBUG: Dequeued thread %d \n", next->tid);  //DEBUG
-
-
                 return next;
-        }else if(running->state == INIT) return NULL;
-        else printf("##### DEBUG: Queue is empty\n");  //DEBUG
-
+        }
         printf("mythread_free: No thread in the system\nExiting...\n");
         exit(1);
 }
