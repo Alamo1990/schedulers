@@ -47,7 +47,7 @@ void init_mythreadlib() {
 
 /* Create and intialize a new thread with body fun_addr and one integer argument */
 int mythread_create (void (*fun_addr)(),int priority){
-        int i, interruptLowPriority = 0;
+        int i;
 
         if (!init) { init_mythreadlib(); init=1; }
         for (i=0; i<N; i++)
@@ -58,8 +58,6 @@ int mythread_create (void (*fun_addr)(),int priority){
                 exit(-1);
         }
 
-        if(priority == HIGH_PRIORITY && running->priority == LOW_PRIORITY) interruptLowPriority == 1;
-        enqueue(queues[priority], &t_state[i]);
         t_state[i].state = INIT;
         t_state[i].priority = priority;
         t_state[i].function = fun_addr;
@@ -73,10 +71,9 @@ int mythread_create (void (*fun_addr)(),int priority){
         t_state[i].run_env.uc_stack.ss_size = STACKSIZE;
         t_state[i].run_env.uc_stack.ss_flags = 0;
         makecontext(&t_state[i].run_env, fun_addr, 1);
-        if(interruptLowPriority) {
-                TCB* next = scheduler();
-                activator(next);
-        }
+        if(priority == HIGH_PRIORITY && running->priority == LOW_PRIORITY) { //Preempts currentthread if needed
+                activator(&t_state[i]);
+        }else enqueue(queues[priority], &t_state[i]);  //ASK: enqueue a la estructura o al puntero?
         return i;
 } /****** End my_thread_create() ******/
 
