@@ -6,10 +6,10 @@ LD	= gcc
 CFLAGS	= -g -Wall
 CFLAGS	+= -I.
 LDFLAGS	= libinterrupt.a
-HEADERS = queue.h FIFO_RR.h #mythread.h RR.h
+HEADERS = queue.h RRFI.h #mythread.h RR.h RRF.h
 
 
-OBJS	= queue.o FIFO_RR.o #mythreadlib.o RR.o
+OBJS	= queue.o RRFI.o #mythreadlib.o RR.o RRF.o
 
 LIBS	=
 

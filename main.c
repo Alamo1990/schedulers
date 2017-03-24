@@ -5,8 +5,10 @@
 #include <ucontext.h>
 #include <unistd.h>
 
+// TODO change all names
 //#include "mythread.h"
-#include "FIFO_RR.h"
+// #include "RR.h"
+#include "RRF.h"
 
 void fun1 (int global_index)
 {
@@ -87,7 +89,7 @@ int main(int argc, char *argv[])
 
 
         for (a=0; a<10; ++a) {
-                //    printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<30000000; ++b) ;
         }
         printf("##### DEBUG: in main loop between threads\n"); //DEBUG

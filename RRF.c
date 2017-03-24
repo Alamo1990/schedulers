@@ -5,7 +5,7 @@
 #include <ucontext.h>
 #include <unistd.h>
 
-#include "FIFO_RR.h"
+#include "RRF.h"
 
 long hungry = 0L;
 
@@ -124,16 +124,18 @@ TCB* scheduler(){
         running->ticks = QUANTUM_TICKS;
         if( (mythread_getpriority() == LOW_PRIORITY || running->state == FREE) && queue_empty(queues[HIGH_PRIORITY])) {
                 if(!queue_empty(queues[LOW_PRIORITY])) {
-                        printf("##### DEBUG: (scheduler)Thread %d has run out of time and will be added again to the queue\n", running->tid);
                         disable_interrupt();
-                        if(running->state == INIT) enqueue(queues[LOW_PRIORITY], running);
+                        if(running->state == INIT) {
+                                printf("##### DEBUG: (scheduler)Thread %d has run out of time and will be added again to the queue\n", running->tid);
+                                enqueue(queues[LOW_PRIORITY], running);
+                        }
                         TCB* next = dequeue(queues[LOW_PRIORITY]);
                         enable_interrupt();
 
                         printf("##### DEBUG: Dequeued thread %d \n", next->tid); //DEBUG
 
                         return next;
-                }else if(running->state == INIT) return NULL;  //ASK
+                }else if(running->state == INIT) return NULL;
                 else printf("##### DEBUG: Queue is empty\n");  //DEBUG
         }else{
                 disable_interrupt();
@@ -154,8 +156,4 @@ void activator(TCB* next){
         current = next->tid;
 
         swapcontext(curContext, &(next->run_env));
-
-        // setcontext(&(next->run_env));
-        printf("mythread_free: After setcontext, should never get here!!...\n"); //ASK
-
 }
