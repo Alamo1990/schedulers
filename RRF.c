@@ -71,9 +71,10 @@ int mythread_create (void (*fun_addr)(),int priority){
         t_state[i].run_env.uc_stack.ss_size = STACKSIZE;
         t_state[i].run_env.uc_stack.ss_flags = 0;
         makecontext(&t_state[i].run_env, fun_addr, 1);
-        if(priority == HIGH_PRIORITY && running->priority == LOW_PRIORITY) { //Preempts currentthread if needed
-                activator(&t_state[i]);
-        }else enqueue(queues[priority], &t_state[i]);
+        enqueue(queues[priority], &t_state[i]);
+        if(priority == HIGH_PRIORITY && running->priority == LOW_PRIORITY)
+                activator(scheduler());
+
         return i;
 } /****** End my_thread_create() ******/
 
@@ -139,6 +140,18 @@ TCB* scheduler(){
                         return next;
                 }else if(running->state == INIT) return NULL;
                 else printf("##### DEBUG: Queue is empty\n");  //DEBUG
+        }else if(running->priority == LOW_PRIORITY) { //Get thread from high priority queue, and enqueue the current onbe to the low priority queue
+                disable_interrupt();
+                if(running->state == INIT) {
+                        printf("##### DEBUG: (scheduler)Thread %d has run out of time and will be added again to the queue.\n", running->tid);
+                        enqueue(queues[LOW_PRIORITY], running);
+                }
+                TCB* next = dequeue(queues[HIGH_PRIORITY]);
+                enable_interrupt();
+
+                printf("##### DEBUG: Dequeued thread %d from high priority queue\n", next->tid); //DEBUG
+
+                return next;
         }else{
                 disable_interrupt();
                 TCB* next = dequeue(queues[HIGH_PRIORITY]);
