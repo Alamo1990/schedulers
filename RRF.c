@@ -73,7 +73,7 @@ int mythread_create (void (*fun_addr)(),int priority){
         makecontext(&t_state[i].run_env, fun_addr, 1);
         if(priority == HIGH_PRIORITY && running->priority == LOW_PRIORITY) { //Preempts currentthread if needed
                 activator(&t_state[i]);
-        }else enqueue(queues[priority], &t_state[i]);  //ASK: enqueue a la estructura o al puntero?
+        }else enqueue(queues[priority], &t_state[i]);
         return i;
 } /****** End my_thread_create() ******/
 
@@ -97,7 +97,7 @@ void mythread_setpriority(int priority) {
 }
 
 /* Returns the priority of the calling thread */
-int mythread_getpriority() { //ASK: why the parameter?
+int mythread_getpriority(int priority) {
         int tid = mythread_gettid();
         return t_state[tid].priority;
 }
@@ -112,7 +112,7 @@ int mythread_gettid(){
 /* Timer interrupt  */
 void timer_interrupt(int sig){
         //printf("##### DEBUG: Tick on thread %d. Remaining ticks: %d\n", running->tid, running->ticks);
-        if(mythread_getpriority() == LOW_PRIORITY && --running->ticks == 0) {
+        if(running->priority == LOW_PRIORITY && --running->ticks == 0) {
                 TCB* next = scheduler();
                 if(next!=NULL) activator(next);
         }
@@ -121,10 +121,10 @@ void timer_interrupt(int sig){
 
 
 /* Scheduler: returns the next thread to be executed */
-TCB* scheduler(){ //FIXME: low priority threads should be preempted mid quantum if HIGH_PRIORITY enters
+TCB* scheduler(){
 
         running->ticks = QUANTUM_TICKS;
-        if( (mythread_getpriority() == LOW_PRIORITY || running->state == FREE) && queue_empty(queues[HIGH_PRIORITY])) {
+        if( (running->priority == LOW_PRIORITY || running->state == FREE) && queue_empty(queues[HIGH_PRIORITY])) {
                 if(!queue_empty(queues[LOW_PRIORITY])) {
                         disable_interrupt();
                         if(running->state == INIT) {

@@ -149,8 +149,4 @@ void activator(TCB* next){
         current = next->tid;
 
         swapcontext(curContext, &(next->run_env));
-
-        // setcontext(&(next->run_env));
-        printf("mythread_free: After setcontext, should never get here!!...\n"); //ASK
-
 }

@@ -13,7 +13,6 @@
 #define INIT 1
 #define STACKSIZE 10000
 #define QUANTUM_TICKS 40
-#define STARVATION 100 //ASK: this constant should be somewhere, but cannot be found
 
 #define LOW_PRIORITY 0
 #define HIGH_PRIORITY 1

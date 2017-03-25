@@ -73,7 +73,7 @@ int mythread_create (void (*fun_addr)(),int priority){
         makecontext(&t_state[i].run_env, fun_addr, 1);
         if(priority == HIGH_PRIORITY && running->priority == LOW_PRIORITY) { //Preempts currentthread if needed
                 activator(&t_state[i]);
-        }else enqueue(queues[priority], &t_state[i]);  //ASK: enqueue a la estructura o al puntero?
+        }else enqueue(queues[priority], &t_state[i]);
         return i;
 } /****** End my_thread_create() ******/
 
@@ -97,7 +97,7 @@ void mythread_setpriority(int priority) {
 }
 
 /* Returns the priority of the calling thread */
-int mythread_getpriority() { //ASK: why the parameter?
+int mythread_getpriority(int priority) {
         int tid = mythread_gettid();
         return t_state[tid].priority;
 }
@@ -115,13 +115,13 @@ void timer_interrupt(int sig){
 
         if(!queue_empty(queues[LOW_PRIORITY]) && !queue_empty(queues[LOW_PRIORITY])) hungry++;
         else if((queue_empty(queues[LOW_PRIORITY]) && queue_empty(queues[LOW_PRIORITY]))) hungry = 0L;
-        if(hungry >= STARVATION) { //REVIEW: condition to prevent errors
+        if(hungry >= STARVATION) {
                 TCB* next = scheduler();
-                if(next!=NULL) activator(next);
+                activator(next);
                 hungry = 0L;
         }
 
-        if(mythread_getpriority() == LOW_PRIORITY && --running->ticks == 0) {
+        if(running->priority == LOW_PRIORITY && --running->ticks == 0) {
                 TCB* next = scheduler();
                 if(next!=NULL) activator(next);
         }
@@ -133,7 +133,9 @@ void timer_interrupt(int sig){
 TCB* scheduler(){
 
         running->ticks = QUANTUM_TICKS;
-        if( (mythread_getpriority() == LOW_PRIORITY || running->state == FREE) && queue_empty(queues[HIGH_PRIORITY])) {
+        if(hungry >= STARVATION) {
+
+        }else if( (running->priority == LOW_PRIORITY || running->state == FREE) && queue_empty(queues[HIGH_PRIORITY])) {
                 if(!queue_empty(queues[LOW_PRIORITY])) {
                         disable_interrupt();
                         if(running->state == INIT) {
