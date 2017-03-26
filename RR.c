@@ -25,7 +25,6 @@ static int init=0;
 
 /* Initialize the thread library */
 void init_mythreadlib() {
-        printf("#####\tDEBUG: enter init_mythreadlib()\n"); //DEBUG
         q = queue_new();
         int i;
         t_state[0].state = INIT;
@@ -56,7 +55,6 @@ int mythread_create (void (*fun_addr)(),int priority){
                 perror("getcontext in my_thread_create");
                 exit(-1);
         }
-        printf("#####\tDEBUG: i = %d\n", i); //DEBUG
         enqueue(q, &t_state[i]);
         t_state[i].state = INIT;
         t_state[i].priority = priority;
@@ -108,7 +106,6 @@ int mythread_gettid(){
 
 /* Timer interrupt  */
 void timer_interrupt(int sig){
-        //printf("##### DEBUG: Tick on thread %d. Remaining ticks: %d\n", running->tid, running->ticks);
         if(--running->ticks == 0) {
                 TCB* next = scheduler();
                 if(next!=NULL) activator(next);
@@ -123,30 +120,15 @@ TCB* scheduler(){
         running->ticks = QUANTUM_TICKS;
 
         if(!queue_empty(q)) {
-                printf("##### DEBUG: (scheduler)Thread %d has run out of time and will be added again to the queue\n", running->tid);
                 disable_interrupt();
                 if(running->state == INIT) enqueue(q, running);
                 TCB* next = dequeue(q);
                 enable_interrupt();
 
-                printf("##### DEBUG: Dequeued thread %d \n", next->tid);  //DEBUG
-
 
                 return next;
         }else if(running->state == INIT) return NULL;
-        else printf("##### DEBUG: Queue is empty\n");  //DEBUG
 
         printf("mythread_free: No thread in the system\nExiting...\n");
         exit(1);
-}
-
-/* Activator */
-void activator(TCB* next){
-
-        ucontext_t* curContext = &running->run_env;
-
-        running = next;
-        current = next->tid;
-
-        swapcontext(curContext, &(next->run_env));
 }

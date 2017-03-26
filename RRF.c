@@ -25,7 +25,6 @@ static int init=0;
 
 /* Initialize the thread library */
 void init_mythreadlib() {
-        printf("#####\tDEBUG: enter init_mythreadlib()\n"); //DEBUG
         queues[HIGH_PRIORITY] = queue_new();
         queues[LOW_PRIORITY] = queue_new();
         int i;
@@ -112,7 +111,6 @@ int mythread_gettid(){
 
 /* Timer interrupt  */
 void timer_interrupt(int sig){
-        //printf("##### DEBUG: Tick on thread %d. Remaining ticks: %d\n", running->tid, running->ticks);
         if(running->priority == LOW_PRIORITY && --running->ticks == 0) {
                 TCB* next = scheduler();
                 if(next!=NULL) activator(next);
@@ -128,28 +126,19 @@ TCB* scheduler(){
         if( (running->priority == LOW_PRIORITY || running->state == FREE) && queue_empty(queues[HIGH_PRIORITY])) {
                 if(!queue_empty(queues[LOW_PRIORITY])) {
                         disable_interrupt();
-                        if(running->state == INIT) {
-                                printf("##### DEBUG: (scheduler)Thread %d has run out of time and will be added again to the queue\n", running->tid);
-                                enqueue(queues[LOW_PRIORITY], running);
-                        }
+                        if(running->state == INIT) enqueue(queues[LOW_PRIORITY], running);
+
                         TCB* next = dequeue(queues[LOW_PRIORITY]);
                         enable_interrupt();
 
-                        printf("##### DEBUG: Dequeued thread %d \n", next->tid); //DEBUG
-
                         return next;
                 }else if(running->state == INIT) return NULL;
-                else printf("##### DEBUG: Queue is empty\n");  //DEBUG
         }else if(running->priority == LOW_PRIORITY) { //Get thread from high priority queue, and enqueue the current onbe to the low priority queue
                 disable_interrupt();
-                if(running->state == INIT) {
-                        printf("##### DEBUG: (scheduler)Thread %d has run out of time and will be added again to the queue.\n", running->tid);
-                        enqueue(queues[LOW_PRIORITY], running);
-                }
+                if(running->state == INIT) enqueue(queues[LOW_PRIORITY], running);
+
                 TCB* next = dequeue(queues[HIGH_PRIORITY]);
                 enable_interrupt();
-
-                printf("##### DEBUG: Dequeued thread %d from high priority queue\n", next->tid); //DEBUG
 
                 return next;
         }else{
@@ -164,11 +153,16 @@ TCB* scheduler(){
 
 /* Activator */
 void activator(TCB* next){
-
         ucontext_t* curContext = &running->run_env;
+        int c = current, s = running->state;
 
         running = next;
         current = next->tid;
-
-        swapcontext(curContext, &(next->run_env));
+        if(s == INIT) {
+                printf("*** SWAPCONTEXT FROM %d to %d\n", c, next->tid);
+                swapcontext(curContext, &(next->run_env));
+        }else{
+                printf("*** THREAD %d FINISHED: SET CONTEXT OF %d\n", c, next->tid);
+                setcontext(&(next->run_env));
+        }
 }

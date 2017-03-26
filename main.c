@@ -92,7 +92,6 @@ int main(int argc, char *argv[])
                 printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<30000000; ++b) ;
         }
-        printf("##### DEBUG: in main loop between threads\n"); //DEBUG
 
         if((a =  mythread_create(fun1,HIGH_PRIORITY)) == -1) {
                 printf("thread failed to initialize\n");
