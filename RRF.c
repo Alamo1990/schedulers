@@ -126,13 +126,17 @@ TCB* scheduler(){
         if( (running->priority == LOW_PRIORITY || running->state == FREE) && queue_empty(queues[HIGH_PRIORITY])) {
                 if(!queue_empty(queues[LOW_PRIORITY])) {
                         disable_interrupt();
+                        TCB* next = dequeue(queues[LOW_PRIORITY]);
+                        enable_interrupt();
+
                         if(running->state == INIT) {
+                                disable_interrupt();
                                 enqueue(queues[LOW_PRIORITY], running);
+                                enable_interrupt();
+
                                 printf("*** SWAPCONTEXT FROM %d to %d\n", current, next->tid);
                         }else printf("*** THREAD %d FINISHED: SET CONTEXT OF %d\n", current, next->tid);
 
-                        TCB* next = dequeue(queues[LOW_PRIORITY]);
-                        enable_interrupt();
 
                         return next;
                 }else if(running->state == INIT) return NULL;

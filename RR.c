@@ -127,7 +127,7 @@ TCB* scheduler(){
 
                 if(running->state == INIT) {
                         disable_interrupt();
-                        enqueue(queues[LOW_PRIORITY], running);
+                        enqueue(q, running);
                         enable_interrupt();
 
                         printf("*** SWAPCONTEXT FROM %d to %d\n", current, next->tid);
