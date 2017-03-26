@@ -77,7 +77,7 @@ int mythread_create (void (*fun_addr)(),int priority){
 void mythread_exit() {
         int tid = mythread_gettid();
 
-        printf("Thread %d finished\n ***************\n", tid);
+        printf("Thread %d FINISHED\n ***************\n", tid);
         t_state[tid].state = FREE;
         free(t_state[tid].run_env.uc_stack.ss_sp);
 
@@ -120,31 +120,32 @@ TCB* scheduler(){
         running->ticks = QUANTUM_TICKS;
 
         if(!queue_empty(q)) {
+
                 disable_interrupt();
-                if(running->state == INIT) enqueue(q, running);
                 TCB* next = dequeue(q);
                 enable_interrupt();
 
+                if(running->state == INIT) {
+                        disable_interrupt();
+                        enqueue(queues[LOW_PRIORITY], running);
+                        enable_interrupt();
+
+                        printf("*** SWAPCONTEXT FROM %d to %d\n", current, next->tid);
+                }else printf("*** THREAD %d FINISHED: SET CONTEXT OF %d\n", current, next->tid);
 
                 return next;
         }else if(running->state == INIT) return NULL;
 
-        printf("mythread_free: No thread in the system\nExiting...\n");
+        printf("FINISH\n");
         exit(1);
 }
 
 /* Activator */
 void activator(TCB* next){
         ucontext_t* curContext = &running->run_env;
-        int c = current, s = running->state;
 
         running = next;
         current = next->tid;
-        if(s == INIT) {
-                printf("*** SWAPCONTEXT FROM %d to %d\n", c, next->tid);
-                swapcontext(curContext, &(next->run_env));
-        }else{
-                printf("*** THREAD %d FINISHED: SET CONTEXT OF %d\n", c, next->tid);
-                setcontext(&(next->run_env));
-        }
+
+        swapcontext(curContext, &(next->run_env));
 }

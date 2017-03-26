@@ -82,7 +82,7 @@ int mythread_create (void (*fun_addr)(),int priority){
 void mythread_exit() {
         int tid = mythread_gettid();
 
-        printf("Thread %d finished\n ***************\n", tid);
+        printf("Thread %d FINISHED\n ***************\n", tid);
         t_state[tid].state = FREE;
         free(t_state[tid].run_env.uc_stack.ss_sp);
 
@@ -126,7 +126,10 @@ TCB* scheduler(){
         if( (running->priority == LOW_PRIORITY || running->state == FREE) && queue_empty(queues[HIGH_PRIORITY])) {
                 if(!queue_empty(queues[LOW_PRIORITY])) {
                         disable_interrupt();
-                        if(running->state == INIT) enqueue(queues[LOW_PRIORITY], running);
+                        if(running->state == INIT) {
+                                enqueue(queues[LOW_PRIORITY], running);
+                                printf("*** SWAPCONTEXT FROM %d to %d\n", current, next->tid);
+                        }else printf("*** THREAD %d FINISHED: SET CONTEXT OF %d\n", current, next->tid);
 
                         TCB* next = dequeue(queues[LOW_PRIORITY]);
                         enable_interrupt();
@@ -140,6 +143,8 @@ TCB* scheduler(){
                 TCB* next = dequeue(queues[HIGH_PRIORITY]);
                 enable_interrupt();
 
+                printf("*** THREAD %d PREEMPTED : SET CONTEXT OF %d\n", current, next->tid);
+
                 return next;
         }else{
                 disable_interrupt();
@@ -147,22 +152,17 @@ TCB* scheduler(){
                 enable_interrupt();
                 return next;
         }
-        printf("mythread_free: No thread in the system\nExiting...\n");
+        printf("FINISH\n");
         exit(1);
 }
 
 /* Activator */
 void activator(TCB* next){
+
         ucontext_t* curContext = &running->run_env;
-        int c = current, s = running->state;
 
         running = next;
         current = next->tid;
-        if(s == INIT) {
-                printf("*** SWAPCONTEXT FROM %d to %d\n", c, next->tid);
-                swapcontext(curContext, &(next->run_env));
-        }else{
-                printf("*** THREAD %d FINISHED: SET CONTEXT OF %d\n", c, next->tid);
-                setcontext(&(next->run_env));
-        }
+
+        swapcontext(curContext, &(next->run_env));
 }
