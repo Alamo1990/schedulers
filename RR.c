@@ -132,3 +132,19 @@ TCB* scheduler(){
         printf("mythread_free: No thread in the system\nExiting...\n");
         exit(1);
 }
+
+/* Activator */
+void activator(TCB* next){
+        ucontext_t* curContext = &running->run_env;
+        int c = current, s = running->state;
+
+        running = next;
+        current = next->tid;
+        if(s == INIT) {
+                printf("*** SWAPCONTEXT FROM %d to %d\n", c, next->tid);
+                swapcontext(curContext, &(next->run_env));
+        }else{
+                printf("*** THREAD %d FINISHED: SET CONTEXT OF %d\n", c, next->tid);
+                setcontext(&(next->run_env));
+        }
+}
