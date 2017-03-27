@@ -136,7 +136,6 @@ void timer_interrupt(int sig){
 
 /* Scheduler: returns the next thread to be executed */
 TCB* scheduler(){
-        running->ticks = QUANTUM_TICKS;
         if( (running->priority == LOW_PRIORITY || running->state == FREE) && queue_empty(queues[HIGH_PRIORITY])) { //Get thread from low priority queue
                 if(!queue_empty(queues[LOW_PRIORITY])) {
 
@@ -149,6 +148,7 @@ TCB* scheduler(){
                                 enqueue(queues[LOW_PRIORITY], running);
                                 enable_interrupt();
 
+                                running->ticks = QUANTUM_TICKS;
                                 printf("*** SWAPCONTEXT FROM %d to %d\n", current, next->tid);
                         }else printf("*** THREAD %d FINISHED: SET CONTEXT OF %d\n", current, next->tid);
 
@@ -163,8 +163,10 @@ TCB* scheduler(){
                 TCB* next = dequeue(queues[HIGH_PRIORITY]);
                 enable_interrupt();
 
-                if(running->ticks == QUANTUM_TICKS) printf("*** SWAPCONTEXT FROM %d to %d\n", current, next->tid);
-                else printf("*** THREAD %d PREEMPTED : SET CONTEXT OF %d\n", current, next->tid);
+                if(running->ticks == 0) {
+                        printf("*** SWAPCONTEXT FROM %d to %d\n", current, next->tid);
+                        running->ticks = QUANTUM_TICKS;
+                }else printf("*** THREAD %d PREEMPTED : SET CONTEXT OF %d\n", current, next->tid);
 
                 return next;
         }else{ //Get thread from high priority queue
