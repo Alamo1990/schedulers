@@ -163,7 +163,8 @@ TCB* scheduler(){
                 TCB* next = dequeue(queues[HIGH_PRIORITY]);
                 enable_interrupt();
 
-                printf("*** THREAD %d PREEMPTED : SET CONTEXT OF %d\n", current, next->tid);
+                if(running->ticks == QUANTUM_TICKS) printf("*** SWAPCONTEXT FROM %d to %d\n", current, next->tid);
+                else printf("*** THREAD %d PREEMPTED : SET CONTEXT OF %d\n", current, next->tid);
 
                 return next;
         }else{ //Get thread from high priority queue
