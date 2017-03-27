@@ -5,21 +5,21 @@
 #include <ucontext.h>
 #include <unistd.h>
 
-#include "mythread.h"
+// #include "mythread.h"
 // #include "RR.h"
 // #include "RRF.h"
-// #include "RRFI.h"
+#include "RRFI.h"
 
 void fun1 (int global_index)
 {
         int a=0, b=0;
         for (a=0; a<10; ++a) {
-                printf ("Thread %d with priority %d\t from fun1 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                // printf ("Thread %d with priority %d\t from fun1 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<25000000; ++b) ;
         }
 
         for (a=0; a<10; ++a) {
-                printf ("Thread %d with priority %d\t from fun1 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                // printf ("Thread %d with priority %d\t from fun1 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<25000000; ++b) ;
         }
         mythread_exit();
@@ -31,11 +31,11 @@ void fun2 (int global_index)
 {
         int a=0, b=0;
         for (a=0; a<10; ++a) {
-                printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                // printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<18000000; ++b) ;
         }
         for (a=0; a<10; ++a) {
-                printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                // printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<18000000; ++b) ;
         }
         mythread_exit();
@@ -46,11 +46,11 @@ void fun3 (int global_index)
 {
         int a=0, b=0;
         for (a=0; a<10; ++a) {
-                printf ("Thread %d with priority %d\t from fun3 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                // printf ("Thread %d with priority %d\t from fun3 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<40000000; ++b) ;
         }
         for (a=0; a<10; ++a) {
-                printf ("Thread %d with priority %d\t from fun3 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+                // printf ("Thread %d with priority %d\t from fun3 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<40000000; ++b) ;
         }
         mythread_exit();
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 {
         int i,j,k,l,m,a,b=0;
 
-        mythread_setpriority(HIGH_PRIORITY);
+        mythread_setpriority(LOW_PRIORITY);
 
         if((i = mythread_create(fun1,LOW_PRIORITY)) == -1) {
                 printf("thread failed to initialize\n");
@@ -88,8 +88,8 @@ int main(int argc, char *argv[])
         }
 
 
-        for (a=0; a<10; ++a) {
-                printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
+        for (a=0; a<100; ++a) {
+                // printf ("Thread %d with priority %d\t from fun2 a = %d\tb = %d\n", mythread_gettid(), mythread_getpriority(), a, b);
                 for (b=0; b<30000000; ++b) ;
         }
 

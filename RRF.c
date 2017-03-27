@@ -70,7 +70,9 @@ int mythread_create (void (*fun_addr)(),int priority){
         t_state[i].run_env.uc_stack.ss_size = STACKSIZE;
         t_state[i].run_env.uc_stack.ss_flags = 0;
         makecontext(&t_state[i].run_env, fun_addr, 1);
+        disable_interrupt();
         enqueue(queues[priority], &t_state[i]);
+        enable_interrupt();
         if(priority == HIGH_PRIORITY && running->priority == LOW_PRIORITY)
                 activator(scheduler());
 
@@ -154,6 +156,9 @@ TCB* scheduler(){
                 disable_interrupt();
                 TCB* next = dequeue(queues[HIGH_PRIORITY]);
                 enable_interrupt();
+
+                printf("*** THREAD %d FINISHED: SET CONTEXT OF %d\n", current, next->tid);
+
                 return next;
         }
         printf("FINISH\n");
