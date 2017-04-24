@@ -5,7 +5,7 @@
 #include <ucontext.h>
 #include <unistd.h>
 
-#include "RR.h"
+#include "mythread.h"
 
 long hungry = 0L;
 

@@ -5,10 +5,7 @@
 #include <ucontext.h>
 #include <unistd.h>
 
-// #include "mythread.h"
-// #include "RR.h"
-// #include "RRF.h"
-#include "RRFI.h"
+#include "mythread.h"
 
 void fun1 (int global_index)
 {
